@@ -1,0 +1,196 @@
+:root {
+    color-scheme: light dark;
+    --accent: #3b82f6;
+    --border-color: rgba(148, 163, 184, 0.4);
+    --bg-muted: rgba(148, 163, 184, 0.1);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #f8fafc;
+    color: #0f172a;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+header {
+    padding: 24px 32px 8px;
+    background: white;
+    border-bottom: 1px solid var(--border-color);
+}
+
+h1 {
+    margin: 0 0 4px;
+    font-size: 2rem;
+}
+
+main {
+    flex: 1;
+    padding: 24px 32px 48px;
+    display: grid;
+    gap: 24px;
+}
+
+.forms {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+}
+
+.form-card {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 12px 20px rgba(15, 23, 42, 0.06);
+}
+
+.form-card h2 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.95rem;
+}
+
+input[type="file"],
+input[type="number"] {
+    padding: 8px 10px;
+    font: inherit;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: rgba(255, 255, 255, 0.85);
+}
+
+input[type="number"] {
+    appearance: textfield;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.dimensions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+    gap: 10px;
+}
+
+.hint {
+    font-size: 0.85rem;
+    color: #475569;
+}
+
+#workspace {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+#plannerWrapper {
+    position: relative;
+    min-height: 320px;
+    background: white;
+    border: 1px dashed var(--border-color);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#planner {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #0f172a;
+    display: none;
+    touch-action: none;
+}
+
+#planner.visible {
+    display: block;
+}
+
+#roomImage {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+#rugImage {
+    position: absolute;
+    cursor: grab;
+    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    pointer-events: auto;
+}
+
+#rugImage.dragging {
+    cursor: grabbing;
+}
+
+#placeholder {
+    text-align: center;
+    color: #475569;
+    max-width: 420px;
+    line-height: 1.4;
+}
+
+.legend {
+    font-size: 0.9rem;
+    color: #1e293b;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.legend i {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    display: inline-block;
+}
+
+.legend .room-color {
+    background: rgba(30, 64, 175, 0.65);
+}
+
+.legend .rug-color {
+    background: rgba(220, 38, 38, 0.65);
+}
+
+@media (max-width: 720px) {
+    header,
+    main {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    #plannerWrapper {
+        padding: 12px;
+    }
+}
