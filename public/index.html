@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Примерка ковра</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+      <div class="container">
+        <a class="navbar-brand" href="#">RugTryOn MVP</a>
+        <span class="navbar-text text-white-50">Примерка ковра на фото комнаты</span>
+      </div>
+    </nav>
+
+    <main class="container pb-5">
+      <section class="mb-5" id="upload-section">
+        <div class="row g-4 align-items-center">
+          <div class="col-lg-6">
+            <h1 class="h3 mb-3">1. Загрузите фото комнаты</h1>
+            <p class="text-muted">
+              Выберите изображение пола комнаты и укажите реальную ширину видимой части пола. Эти данные нужны, чтобы перевести пиксели в сантиметры и отображать ковер в масштабе.
+            </p>
+            <form id="roomUploadForm" class="card p-3 shadow-sm" enctype="multipart/form-data">
+              <div class="mb-3">
+                <label for="roomImage" class="form-label">Фото комнаты</label>
+                <input class="form-control" type="file" id="roomImage" name="image" accept="image/*" required />
+              </div>
+              <div class="mb-3">
+                <label for="roomWidth" class="form-label">Ширина пола в видимой зоне (см)</label>
+                <input class="form-control" type="number" min="1" step="0.1" id="roomWidth" name="real_room_width_cm" placeholder="Например, 420" required />
+              </div>
+              <button type="submit" class="btn btn-primary">Загрузить фото</button>
+              <div class="form-text" id="uploadStatus"></div>
+            </form>
+          </div>
+          <div class="col-lg-6 text-center">
+            <img src="/images/illustration-room.svg" alt="Иллюстрация комнаты" class="img-fluid mb-3" />
+            <p class="text-muted small">После загрузки вы сможете поставить две контрольные точки на полу для калибровки масштаба.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="mb-5 d-none" id="calibration-section">
+        <h2 class="h4 mb-3">2. Калибровка масштаба</h2>
+        <p class="text-muted mb-3">
+          Кликните по двум точкам на плинтусе (или любой прямой линии пола), которые соответствуют введенной ширине. После выбора точек нажмите «Сохранить калибровку».
+        </p>
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <div class="canvas-wrapper mb-3">
+              <canvas id="calibrationCanvas" class="w-100 border rounded" aria-label="Калибровка комнаты"></canvas>
+            </div>
+            <div class="d-flex flex-wrap gap-2 mb-2">
+              <button class="btn btn-outline-secondary" id="resetCalibration" type="button">Сбросить точки</button>
+              <button class="btn btn-success" id="confirmCalibration" type="button">Сохранить калибровку</button>
+            </div>
+            <p class="small text-muted mb-0" id="calibrationHint">Выберите две точки на изображении.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="mb-5 d-none" id="catalog-section">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+          <h2 class="h4 mb-0">3. Выберите ковер</h2>
+          <div class="text-muted small" id="catalogStats"></div>
+        </div>
+        <div class="row g-3" id="rugCatalog" aria-live="polite"></div>
+        <div class="alert alert-info mt-3 d-none" id="emptyCatalog">Каталог пока пуст. Добавьте ковры через админ-панель.</div>
+      </section>
+
+      <section class="mb-5 d-none" id="tryon-section">
+        <h2 class="h4 mb-3">4. Примерка ковра</h2>
+        <div class="row g-4">
+          <div class="col-lg-8">
+            <div class="card shadow-sm">
+              <div class="card-body">
+                <div class="canvas-wrapper position-relative">
+                  <canvas id="tryOnCanvas" class="w-100 border rounded bg-light" aria-label="Холст примерки"></canvas>
+                  <div class="grid-overlay d-none" id="gridOverlay"></div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+                  <div>
+                    <span class="text-muted small">Текущий размер ковра:</span>
+                    <strong id="currentRugSize">—</strong>
+                  </div>
+                  <div class="badge bg-secondary" id="aspectWarning" hidden>Пропорции искажены</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="card shadow-sm">
+              <div class="card-body d-flex flex-column gap-3">
+                <div>
+                  <label for="scaleRange" class="form-label">Масштаб</label>
+                  <input type="range" class="form-range" min="25" max="300" value="100" id="scaleRange" />
+                  <div class="d-flex justify-content-between small text-muted">
+                    <span>0.25×</span>
+                    <span id="scaleValue">1.00×</span>
+                    <span>3×</span>
+                  </div>
+                </div>
+                <div id="scaleYGroup" class="d-none">
+                  <label for="scaleYRange" class="form-label">Масштаб по высоте</label>
+                  <input type="range" class="form-range" min="25" max="300" value="100" id="scaleYRange" />
+                  <div class="d-flex justify-content-between small text-muted">
+                    <span>0.25×</span>
+                    <span id="scaleYValue">1.00×</span>
+                    <span>3×</span>
+                  </div>
+                </div>
+                <div>
+                  <label for="rotationRange" class="form-label">Поворот</label>
+                  <input type="range" class="form-range" min="-45" max="45" value="0" id="rotationRange" />
+                  <div class="d-flex justify-content-between small text-muted">
+                    <span>-45°</span>
+                    <span id="rotationValue">0°</span>
+                    <span>45°</span>
+                  </div>
+                </div>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="keepAspectToggle" checked />
+                  <label class="form-check-label" for="keepAspectToggle">Сохранять пропорции</label>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                  <button class="btn btn-outline-primary flex-grow-1" id="fitWidthBtn" type="button">Вписать по ширине комнаты</button>
+                  <button class="btn btn-outline-secondary" id="toggleGridBtn" type="button">Сетка 10 см</button>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                  <button class="btn btn-success flex-grow-1" id="saveTryOnBtn" type="button">Сохранить сессию</button>
+                  <button class="btn btn-outline-success" id="screenshotBtn" type="button">Скриншот</button>
+                </div>
+                <div class="small text-muted" id="saveStatus"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="mb-5" id="admin-section">
+        <h2 class="h4 mb-3">Админ-панель</h2>
+        <div class="row g-4">
+          <div class="col-lg-5">
+            <div class="card shadow-sm">
+              <div class="card-body">
+                <h3 class="h5">Вход для администратора</h3>
+                <form id="adminLoginForm" class="mt-3">
+                  <div class="mb-3">
+                    <label for="adminEmail" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="adminEmail" value="admin@example.com" required />
+                  </div>
+                  <div class="mb-3">
+                    <label for="adminPassword" class="form-label">Пароль</label>
+                    <input type="password" class="form-control" id="adminPassword" value="admin123" required />
+                  </div>
+                  <button type="submit" class="btn btn-dark">Войти</button>
+                  <div class="small text-muted" id="adminLoginStatus"></div>
+                </form>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-7">
+            <div class="card shadow-sm d-none" id="adminPanel">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h3 class="h5 mb-0">Добавить ковер</h3>
+                  <button class="btn btn-outline-danger btn-sm" id="adminLogoutBtn" type="button">Выйти</button>
+                </div>
+                <form id="addRugForm" enctype="multipart/form-data">
+                  <div class="mb-3">
+                    <label for="rugTitle" class="form-label">Название</label>
+                    <input type="text" class="form-control" id="rugTitle" name="title" required />
+                  </div>
+                  <div class="row g-3">
+                    <div class="col">
+                      <label for="rugWidth" class="form-label">Ширина (см)</label>
+                      <input type="number" min="1" step="0.1" class="form-control" id="rugWidth" name="width_cm" required />
+                    </div>
+                    <div class="col">
+                      <label for="rugLength" class="form-label">Длина (см)</label>
+                      <input type="number" min="1" step="0.1" class="form-control" id="rugLength" name="length_cm" required />
+                    </div>
+                  </div>
+                  <div class="mb-3 mt-3">
+                    <label for="rugImage" class="form-label">Изображение ковра</label>
+                    <input type="file" class="form-control" id="rugImage" name="image" accept="image/*" required />
+                  </div>
+                  <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="rugActive" name="is_active" checked />
+                    <label class="form-check-label" for="rugActive">Активен</label>
+                  </div>
+                  <button type="submit" class="btn btn-primary">Добавить</button>
+                  <div class="small text-muted" id="addRugStatus"></div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="table-responsive mt-4">
+          <table class="table table-striped align-middle" id="adminRugTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Название</th>
+                <th>Размер (см)</th>
+                <th>Статус</th>
+                <th>Добавлен</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <footer class="bg-dark text-white-50 py-4 mt-auto">
+      <div class="container small">
+        <p class="mb-1">MVP платформы примерки ковров. Версия для демонстрации.</p>
+        <p class="mb-0">Админ-доступ по умолчанию: <code>admin@example.com</code> / <code>admin123</code>.</p>
+      </div>
+    </footer>
+
+    <div class="toast-container position-fixed top-0 end-0 p-3" id="toastContainer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="/js/app.js" type="module"></script>
+  </body>
+</html>

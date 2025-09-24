@@ -1,0 +1,18 @@
+<svg width="640" height="360" viewBox="0 0 640 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Комната с ковром</title>
+  <desc id="desc">Схематичное изображение комнаты с окном и ковром</desc>
+  <defs>
+    <linearGradient id="wall" x1="0%" x2="0%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#f4f6fb" />
+      <stop offset="100%" stop-color="#e1e6f2" />
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="640" height="220" fill="url(#wall)" />
+  <rect x="0" y="220" width="640" height="140" fill="#d7c7b4" />
+  <rect x="420" y="40" width="140" height="100" fill="#cde4ff" stroke="#8bb6e5" stroke-width="6" rx="8" />
+  <rect x="160" y="190" width="320" height="120" fill="#d0e4d9" stroke="#9abdad" stroke-width="6" rx="12" />
+  <rect x="190" y="210" width="260" height="80" fill="#a5c7b8" rx="10" />
+  <rect x="0" y="212" width="640" height="8" fill="#c2b19f" />
+  <circle cx="520" cy="270" r="26" fill="#f0f4ff" stroke="#c3d3f2" stroke-width="6" />
+  <rect x="80" y="110" width="90" height="70" fill="#ede5d6" stroke="#c5b69e" stroke-width="6" />
+</svg>
