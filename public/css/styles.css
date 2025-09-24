@@ -1,0 +1,41 @@
+body {
+  background-color: #f5f7fb;
+  font-family: "Inter", "Segoe UI", sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main.container {
+  flex: 1 0 auto;
+}
+
+.canvas-wrapper {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+canvas {
+  max-width: 100%;
+  display: block;
+  touch-action: none;
+}
+
+.grid-overlay {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background-size: 40px 40px;
+  background-image: linear-gradient(to right, rgba(0, 123, 255, 0.15) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 123, 255, 0.15) 1px, transparent 1px);
+  border-radius: 0.5rem;
+}
+
+.toast-container .toast {
+  min-width: 260px;
+}
+
+footer {
+  flex-shrink: 0;
+}
