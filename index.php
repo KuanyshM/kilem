@@ -140,7 +140,7 @@
         #roomImage {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
             display: block;
         }
 
@@ -248,8 +248,8 @@
     <section id="workspace">
         <h2>Интерфейс примерки</h2>
         <div class="legend">
-            <span><i class="room-color"></i>Комната отображается пропорционально указанным размерам.</span>
-            <span><i class="rug-color"></i>Ковёр можно перемещать внутри границ комнаты.</span>
+            <span><i class="room-color"></i>Комната отображается без искажений, в пропорциях фотографии.</span>
+            <span><i class="rug-color"></i>Ковёр масштабируется по размерам и перемещается внутри границ комнаты.</span>
         </div>
         <div id="plannerWrapper">
             <div id="planner">
@@ -268,7 +268,9 @@
         room: {
             fileDataUrl: null,
             length: null,
-            width: null
+            width: null,
+            naturalWidth: null,
+            naturalHeight: null
         },
         rug: {
             fileDataUrl: null,
@@ -320,15 +322,14 @@
         }
     }
 
-    function calculateScale(roomLength, roomWidth) {
-        if (!roomLength || !roomWidth) {
-            return { scale: 1, displayWidth: 0, displayHeight: 0 };
+    function determineRoomDisplaySize(naturalWidth, naturalHeight) {
+        if (!naturalWidth || !naturalHeight) {
+            return { displayWidth: 0, displayHeight: 0 };
         }
-        const scale = Math.min(maxDisplayWidth / roomLength, maxDisplayHeight / roomWidth);
+        const scale = Math.min(maxDisplayWidth / naturalWidth, maxDisplayHeight / naturalHeight, 1);
         return {
-            scale,
-            displayWidth: roomLength * scale,
-            displayHeight: roomWidth * scale
+            displayWidth: naturalWidth * scale,
+            displayHeight: naturalHeight * scale
         };
     }
 
@@ -356,7 +357,7 @@
         state.rug.length = rugLength;
         state.rug.width = rugWidth;
 
-        const hasRoomData = Boolean(state.room.fileDataUrl && roomLength && roomWidth);
+        const hasRoomData = Boolean(state.room.fileDataUrl && roomLength && roomWidth && state.room.naturalWidth && state.room.naturalHeight);
         const hasRugData = Boolean(state.rug.fileDataUrl && rugLength && rugWidth);
         const isReady = hasRoomData && hasRugData;
         updatePlannerVisibility(isReady);
@@ -364,13 +365,20 @@
             return;
         }
 
-        const { scale, displayWidth, displayHeight } = calculateScale(roomLength, roomWidth);
+        const { displayWidth, displayHeight } = determineRoomDisplaySize(state.room.naturalWidth, state.room.naturalHeight);
+        if (displayWidth <= 0 || displayHeight <= 0) {
+            return;
+        }
         planner.style.width = `${displayWidth}px`;
         planner.style.height = `${displayHeight}px`;
         roomImageEl.src = state.room.fileDataUrl;
 
-        const rugWidthPx = rugLength * scale;
-        const rugHeightPx = rugWidth * scale;
+        const meterToPixelScale = Math.min(displayWidth / roomLength, displayHeight / roomWidth);
+        if (!Number.isFinite(meterToPixelScale) || meterToPixelScale <= 0) {
+            return;
+        }
+        const rugWidthPx = rugLength * meterToPixelScale;
+        const rugHeightPx = rugWidth * meterToPixelScale;
         rugImageEl.src = state.rug.fileDataUrl;
         rugImageEl.style.width = `${rugWidthPx}px`;
         rugImageEl.style.height = `${rugHeightPx}px`;
@@ -388,9 +396,27 @@
 
     function attachInputHandlers() {
         roomImageInput.addEventListener('change', () => {
-            readFileAsDataUrl(roomImageInput.files?.[0], (dataUrl) => {
+            const file = roomImageInput.files?.[0] ?? null;
+            readFileAsDataUrl(file, (dataUrl) => {
                 state.room.fileDataUrl = dataUrl;
-                updatePlanner();
+                state.room.naturalWidth = null;
+                state.room.naturalHeight = null;
+
+                if (!dataUrl) {
+                    updatePlanner();
+                    return;
+                }
+
+                const img = new Image();
+                img.onload = () => {
+                    state.room.naturalWidth = img.naturalWidth;
+                    state.room.naturalHeight = img.naturalHeight;
+                    updatePlanner();
+                };
+                img.onerror = () => {
+                    updatePlanner();
+                };
+                img.src = dataUrl;
             });
         });
 
